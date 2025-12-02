@@ -55,11 +55,11 @@ def tick_to_price(t):
 # ======================================================
 
 st.title("🦄 Uniswap v3 Range Visualizer + GBM Volume Simulator")
-with st.expander("📘 Uniswap V3 Math – Detailed Explanation (optional)"):
+with st.expander("📘 Uniswap V3 Math Explanation (click to expand)"):
     st.markdown(r"""
-# **📘 Understanding Uniswap V3 Math: A Practical Example**
+# **Understanding Uniswap V3 Math: A Practical Example**
 
-In this article, we explore the core mathematical structure behind **Uniswap V3 liquidity provisioning**, using a concrete example to illustrate how token reserves change with price — and why, *locally*, Uniswap V3 behaves almost exactly like a **constant-sum CLMM**.
+In this section, we explore the core mathematical structure behind **Uniswap V3 liquidity provisioning**, using a concrete example to illustrate how token reserves change with price — and why, *locally*, Uniswap V3 behaves almost exactly like a **constant-sum CLMM**.
 
 ---
 
@@ -67,30 +67,30 @@ In this article, we explore the core mathematical structure behind **Uniswap V3 
 
 Uniswap V3 expresses the liquidity relationship between two tokens with the equation
 
-\[
+$$
 (x + \frac{L}{\sqrt{p_{\max}}})(y + L\sqrt{p_{\min}}) = L^2.
-\]
+$$
 
 Here:
 
-- \(x\) and \(y\) are token reserves,
-- \(L\) is the liquidity parameter,
-- \(p\) is the price (in units of token \(y\) per token \(x\)),
-- \(p_{\min}\) and \(p_{\max}\) define the active range.
+- \(x\) and \(y\) are token reserves  
+- \(L\) is the liquidity parameter  
+- \(p\) is the price (token1 per token0)  
+- \(p_{\min}\), \(p_{\max}\) define the active range  
 
 ---
 
 ## 🧮 Token Amounts as a Function of Price
 
-Solving the invariant for \(x(p)\) and \(y(p)\) yields
+Solving the invariant for token balances yields:
 
-\[
-x(p) = L\Big(\frac{1}{\sqrt{p}} - \frac{1}{\sqrt{p_{\max}}}\Big), 
+$$
+x(p) = L\Big(\frac{1}{\sqrt{p}} - \frac{1}{\sqrt{p_{\max}}}\Big),
 \qquad
 y(p) = L\Big(\sqrt{p} - \sqrt{p_{\min}} \Big).
-\]
+$$
 
-These functions give the token holdings implied by a given price inside the active liquidity range.
+These functions give the *exact* token holdings implied by the price \(p\) **inside the active range**.
 
 ---
 
@@ -98,102 +98,83 @@ These functions give the token holdings implied by a given price inside the acti
 
 We choose:
 
-- \(p = 1\)
-- \(p_{\max} = 3\)
-- \(p_{\min} = \frac{1}{3}\)
-- Token reserves: \(5000x\) and \(5000y\)
+- \(p = 1\)  
+- \(p_{\max} = 3\)  
+- \(p_{\min} = \frac{1}{3}\)  
+- Token reserves: \(x = 5000\), \(y = 5000\)
 
-At \(p = 1\),
+At \(p=1\):
 
-\[
-x(1) = L\Big(1 - \frac{1}{\sqrt{3}}\Big),
-\qquad
+$$
+x(1) = L\Big(1 - \frac{1}{\sqrt{3}}\Big), \qquad
 y(1) = L\Big(1 - \sqrt{\frac{1}{3}}\Big).
-\]
+$$
 
 Setting both equal to 5000 gives:
 
-\[
-L = \frac{5000}{1 - 1/\sqrt{3}}
+$$
+L = \frac{5000}{\,1 - 1/\sqrt{3}\,}
 = 2500(3 + \sqrt{3})
 \approx 11830.13.
-\]
+$$
 
 ---
 
 ## 📈 Token Balances at Different Prices
 
-| Price \(p\) | \(\sqrt{p}\) | \(x(p)=L(1/\sqrt{p}-1/\sqrt{3})\) | \(y(p)=L(\sqrt{p}-\sqrt{p_{\min}})\) |
-| ----------- | ------------ | ---------------------------------- | ------------------------------------ |
-| 1.00        | 1.0000       | 5000.00                            | 5000.00                              |
-| 1.05        | 1.0247       | 4714.89                            | 5292.15                              |
-| 1.10        | 1.0488       | 4449.46                            | 5577.41                              |
-| 1.20        | 1.0954       | 3969.25                            | 6129.13                              |
-| 1.40        | 1.1832       | 3168.16                            | 7167.47                              |
-
-Notes:
-
-- \(\sqrt{p_{\min}} = \sqrt{1/3} \approx 0.57735\)
-- \(1/\sqrt{p_{\max}} = 1/\sqrt{3} \approx 0.57735\)
+| Price \(p\) | \(\sqrt{p}\) | \(x(p)=L(1/\sqrt{p}-1/\sqrt{3})\) | \(y(p)=L(\sqrt{p}-\sqrt{1/3})\) |
+| ----------- | ------------ | ---------------------------------- | -------------------------------- |
+| 1.00        | 1.0000       | 5000.00                            | 5000.00                          |
+| 1.05        | 1.0247       | 4714.89                            | 5292.15                          |
+| 1.10        | 1.0488       | 4449.46                            | 5577.41                          |
+| 1.20        | 1.0954       | 3969.25                            | 6129.13                          |
+| 1.40        | 1.1832       | 3168.16                            | 7167.47                          |
 
 ---
 
-## 🔄 How Uniswap V3 Locally Behaves Like a Constant-Sum AMM (CLMM)
+## 🔄 Local Constant-Sum Behavior
 
-Although Uniswap V3 is globally nonlinear, **inside a tick** the pricing function is perfectly smooth. The local behavior follows directly from differentiating the token formulas:
+Differentiate the formulas:
 
-\[
+$$
 dx = -\frac{L}{2}p^{-3/2}\,dp,
 \qquad
-dy =  \frac{L}{2}p^{-1/2}\,dp.
-\]
+dy = \frac{L}{2}p^{-1/2}\,dp.
+$$
 
 Forming the value-weighted combination:
 
-\[
-dx + \frac{1}{p}\,dy = 0
-\quad\Longleftrightarrow\quad
-p \, dx + dy = 0,
-\]
+$$
+dx + \frac{1}{p} dy = 0,
+$$
 
-we find that **infinitesimal swaps keep the total value constant**, just like a constant-sum AMM:
+which is equivalent to:
 
-\[
-\text{value}_X + \text{value}_Y = \text{const}.
-\]
+$$
+p\,dx + dy = 0.
+$$
 
-This means:
+This implies:
 
-### ✔ Between ticks, Uniswap V3 behaves like a constant-sum CLMM in value.
+> **Inside a tick, Uniswap V3 behaves exactly like a constant-sum AMM in *value space***.
 
-The marginal price is *flat* inside a tick; curvature only shows up at second order in \(dp\).
+Meaning:
 
-### ✔ Tick boundaries act as “liquidity steps.”
-
-When the price reaches a tick, a new liquidity tranche activates or deactivates.
-This creates a **piecewise-linear AMM in value space**, perfectly matching the conceptual structure of a CLMM.
-
-### ✔ Practical implication
-
-For very small price changes, the swap relationship is nearly:
-
-\[
-\Delta y \approx -p \,\Delta x,
-\]
-
-meaning each tiny trade is a **linear, constant-price exchange** until hitting the next tick.
+- The marginal exchange rate is **flat** between ticks.
+- Curvature only appears when crossing a tick boundary.
+- Tick boundaries act as **liquidity steps**, stitching together linear segments.
 
 ---
 
 ## 🧠 Takeaways
 
-- As price increases, **x-reserves decrease** and **y-reserves increase**, following the v3 invariant.
-- The local structure of the v3 curve is **linear in value**, not curved — allowing you to interpret each tick as a tiny **constant-sum CLMM shard**.
-- Global curvature emerges by “stitching together” these local segments across many ticks.
-- This perspective is often the most intuitive way to understand v3’s mechanics, routing behavior, LVR, and fee design.
+- As price increases: **x decreases**, **y increases**, per the v3 invariant.  
+- Locally (between ticks), the AMM is **linear** in value.  
+- Global curvature arises by stitching together many **constant-sum segments**.  
+- This viewpoint explains routing, slippage, LVR, and fee behavior inside v3.
 
----
-    """)
+""")
+
 
 st.sidebar.header("Initialization")
 
