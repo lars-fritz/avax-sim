@@ -98,10 +98,10 @@ These functions give the *exact* token holdings implied by the price \(p\) **ins
 
 We choose:
 
-- \(p = 1\)  
-- \(p_{\max} = 3\)  
-- \(p_{\min} = \frac{1}{3}\)  
-- Token reserves: \(x = 5000\), \(y = 5000\)
+- $$(p = 1)$$  
+- $$(p_{\max} = 3)$$  
+- $$(p_{\min} = \frac{1}{3}$$ 
+- Token reserves: $$(x = 5000), (y = 5000)$$
 
 At \(p=1\):
 
