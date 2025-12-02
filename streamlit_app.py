@@ -152,4 +152,45 @@ st.pyplot(fig)
 st.write("## 📈 GBM Price Simulation and Volume Accumulation")
 
 vol = st.number_input("Daily Volatility (e.g. 0.9 = 90%)", value=0.90)
-block_time = st.number_input("Avalanche B
+block_time = st.number_input("Avalanche Block Time (seconds)", value=1.5)
+simulate = st.button("Run GBM Simulation")
+
+if simulate:
+
+    dt = block_time / 86400.0
+    steps = int(0.5 / dt)   # half-day
+
+    prices = np.zeros(steps)
+    prices[0] = price
+
+    # total volume per LP range
+    volumes = [0.0, 0.0, 0.0]
+
+    rng = np.random.default_rng()
+
+    for t in range(steps-1):
+        Z = rng.standard_normal()
+        prices[t+1] = prices[t] * math.exp(vol * math.sqrt(dt) * Z - 0.5 * vol**2 * dt)
+
+        p_old = prices[t]
+        p_new = prices[t+1]
+        p_mid = 0.5 * (p_old + p_new)
+
+        for i, (L, pmin, pmax) in enumerate(Ls):
+
+            # if outside range: skip
+            if p_old < pmin or p_old > pmax:
+                continue
+            if p_new < pmin or p_new > pmax:
+                continue
+
+            # compute x liquidity difference
+            dx_old = x_amount_future(L, p_old, pmin, pmax)
+            dx_new = x_amount_future(L, p_new, pmin, pmax)
+
+            traded = abs(dx_new - dx_old) * p_mid
+            volumes[i] += traded
+
+    st.write("### 📊 Final Total Volumes (Over Half Day)")
+    for i, v in enumerate(volumes, start=1):
+        st.write(f"**Range {i}: ${v:,.2f}**")
