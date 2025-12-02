@@ -66,9 +66,9 @@ init_mode = st.sidebar.radio(
 )
 
 if init_mode == "AVAX (token0)":
-    start_amount = st.sidebar.number_input("Enter AVAX amount:", value=10.0)
+    start_amount = st.sidebar.number_input("Enter AVAX amount:", value=100000.0)
 else:
-    start_amount = st.sidebar.number_input("Enter USDC amount:", value=130.0)
+    start_amount = st.sidebar.number_input("Enter USDC amount:", value=1000000.0)
 
 st.sidebar.header("Symmetric Tick Ranges")
 
@@ -150,8 +150,8 @@ st.pyplot(fig)
 
 st.write("## 📈 GBM Price Simulation (Single Path)")
 
-vol = st.number_input("Daily Volatility (σ)", value=0.90)
-block_time = st.number_input("Avalanche Block Time (seconds)", value=1.5)
+vol = st.number_input("Daily Volatility (σ)", value=0.05)
+block_time = st.number_input("Avalanche Block Time (seconds)", value=1.8)
 do_single = st.button("Run Single GBM Path")
 
 def simulate_gbm_once(price, vol, block_time, Ls):
