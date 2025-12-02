@@ -73,10 +73,10 @@ $$
 
 Here:
 
-- \(x\) and \(y\) are token reserves  
-- \(L\) is the liquidity parameter  
-- \(p\) is the price (token1 per token0)  
-- \(p_{\min}\), \(p_{\max}\) define the active range  
+- $$x$$ and $$(y)$$ are token reserves  
+- $$L$$ is the liquidity parameter  
+- $$p$$ is the price (token1 per token0)  
+- $$(p_{\min}, p_{\max})$$ define the active range  
 
 ---
 
@@ -98,12 +98,12 @@ These functions give the *exact* token holdings implied by the price \(p\) **ins
 
 We choose:
 
-- $$(p = 1)$$  
-- $$(p_{\max} = 3)$$  
-- $$(p_{\min} = \frac{1}{3}$$ 
-- Token reserves: $$(x = 5000), (y = 5000)$$
+- $$p = 1$$  
+- $$p_{\max} = 3$$  
+- $$(_{\min} = \frac{1}{3}$$ 
+- Token reserves: $$x = 5000, y = 5000$$
 
-At \(p=1\):
+At $$p=1$$:
 
 $$
 x(1) = L\Big(1 - \frac{1}{\sqrt{3}}\Big), \qquad
@@ -122,7 +122,7 @@ $$
 
 ## 📈 Token Balances at Different Prices
 
-| Price \(p\) | \(\sqrt{p}\) | \(x(p)=L(1/\sqrt{p}-1/\sqrt{3})\) | \(y(p)=L(\sqrt{p}-\sqrt{1/3})\) |
+| Price $$p$$ | $$\sqrt{p}$$ | $$x(p)=L\left(\frac{1}{\sqrt{p}}-\frac{1}{\sqrt{3}}\right)$$ | $$y(p)=L(\sqrt{p}-\sqrt{1/3})$$ |
 | ----------- | ------------ | ---------------------------------- | -------------------------------- |
 | 1.00        | 1.0000       | 5000.00                            | 5000.00                          |
 | 1.05        | 1.0247       | 4714.89                            | 5292.15                          |
