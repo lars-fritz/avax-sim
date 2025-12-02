@@ -100,7 +100,7 @@ We choose:
 
 - $$p = 1$$  
 - $$p_{\max} = 3$$  
-- $$(_{\min} = \frac{1}{3}$$ 
+- $$p_{\min} = \frac{1}{3}$$ 
 - Token reserves: $$x = 5000, y = 5000$$
 
 At $$p=1$$:
