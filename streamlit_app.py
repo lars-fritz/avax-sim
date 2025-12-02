@@ -3,7 +3,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Uniswap v3 Range Tool", layout="wide")
+st.set_page_config(page_title="Uniswap v3 Range Tool + GBM", layout="wide")
 
 # ======================================================
 # MATH FUNCTIONS
@@ -135,7 +135,6 @@ for (L, pmin, pmax), color, label in zip(Ls, colors, labels):
     p_grid = sqrt_grid**2
     liquidity = np.ones_like(p_grid) * L
 
-    # Use bar histogram-style visualization
     ax.bar(p_grid, liquidity, width=0.0005 * p_grid, alpha=0.4, color=color, label=label)
 
 ax.set_title("Liquidity Distribution vs Price")
@@ -146,51 +145,91 @@ ax.legend()
 st.pyplot(fig)
 
 # ======================================================
-# GBM SIMULATION SECTION
+# GBM SINGLE RUN
 # ======================================================
 
-st.write("## 📈 GBM Price Simulation and Volume Accumulation")
+st.write("## 📈 GBM Price Simulation (Single Path)")
 
-vol = st.number_input("Daily Volatility (e.g. 0.9 = 90%)", value=0.90)
+vol = st.number_input("Daily Volatility (σ)", value=0.90)
 block_time = st.number_input("Avalanche Block Time (seconds)", value=1.5)
-simulate = st.button("Run GBM Simulation")
+do_single = st.button("Run Single GBM Path")
 
-if simulate:
-
+def simulate_gbm_once(price, vol, block_time, Ls):
     dt = block_time / 86400.0
-    steps = int(0.5 / dt)   # half-day
+    steps = int(0.5 / dt)
 
     prices = np.zeros(steps)
     prices[0] = price
 
-    # total volume per LP range
     volumes = [0.0, 0.0, 0.0]
-
     rng = np.random.default_rng()
 
-    for t in range(steps-1):
+    for t in range(steps - 1):
         Z = rng.standard_normal()
         prices[t+1] = prices[t] * math.exp(vol * math.sqrt(dt) * Z - 0.5 * vol**2 * dt)
 
         p_old = prices[t]
         p_new = prices[t+1]
-        p_mid = 0.5 * (p_old + p_new)
 
         for i, (L, pmin, pmax) in enumerate(Ls):
 
-            # if outside range: skip
-            if p_old < pmin or p_old > pmax:
+            if not (p_old >= pmin and p_old <= pmax):
                 continue
-            if p_new < pmin or p_new > pmax:
+            if not (p_new >= pmin and p_new <= pmax):
                 continue
 
-            # compute x liquidity difference
-            dx_old = x_amount_future(L, p_old, pmin, pmax)
-            dx_new = x_amount_future(L, p_new, pmin, pmax)
+            y_old = y_amount_future(L, p_old, pmin, pmax)
+            y_new = y_amount_future(L, p_new, pmin, pmax)
 
-            traded = abs(dx_new - dx_old) * p_mid
-            volumes[i] += traded
+            volumes[i] += abs(y_new - y_old)
 
-    st.write("### 📊 Final Total Volumes (Over Half Day)")
+    return prices, volumes
+
+if do_single:
+    prices, volumes = simulate_gbm_once(price, vol, block_time, Ls)
+
+    # Plot GBM
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
+    ax2.plot(prices, color='purple')
+    ax2.set_title("GBM Price Path (Half-Day)")
+    ax2.set_xlabel("Step")
+    ax2.set_ylabel("Price")
+    st.pyplot(fig2)
+
+    st.write("### 📊 Final Total Volumes (USDC)")
     for i, v in enumerate(volumes, start=1):
         st.write(f"**Range {i}: ${v:,.2f}**")
+
+# ======================================================
+# MONTE CARLO
+# ======================================================
+
+st.write("## 📊 Monte Carlo Volume Distribution (1000 runs)")
+
+do_mc = st.button("Run Monte Carlo")
+
+if do_mc:
+
+    N = 1000
+    all_vols = np.zeros((3, N))
+
+    for k in range(N):
+        _, vols = simulate_gbm_once(price, vol, block_time, Ls)
+        all_vols[:, k] = vols
+
+    st.write("### Volume Statistics")
+    for i in range(3):
+        st.write(
+            f"**Range {i+1}** — Mean: {all_vols[i].mean():,.2f},  Std: {all_vols[i].std():,.2f}"
+        )
+
+    # Histogram plot
+    fig3, axes = plt.subplots(1, 3, figsize=(18, 4))
+
+    for i in range(3):
+        axes[i].hist(all_vols[i], bins=40, color=colors[i], alpha=0.7)
+        axes[i].set_title(f"Range {i+1}")
+        axes[i].set_xlabel("Volume (USDC)")
+        axes[i].set_ylabel("Frequency")
+
+    st.pyplot(fig3)
