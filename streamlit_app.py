@@ -158,30 +158,30 @@ def simulate_gbm_once(price, vol, block_time, Ls):
     dt = block_time / 86400.0
     steps = int(0.5 / dt)
 
+    # vectorized GBM
+    Z = np.random.standard_normal(steps - 1)
+    increments = vol * math.sqrt(dt) * Z - 0.5 * vol**2 * dt
     prices = np.zeros(steps)
     prices[0] = price
+    prices[1:] = price * np.exp(np.cumsum(increments))
 
     volumes = [0.0, 0.0, 0.0]
-    rng = np.random.default_rng()
 
-    for t in range(steps - 1):
-        Z = rng.standard_normal()
-        prices[t+1] = prices[t] * math.exp(vol * math.sqrt(dt) * Z - 0.5 * vol**2 * dt)
+    # compute y-values
+    for i, (L, pmin, pmax) in enumerate(Ls):
 
-        p_old = prices[t]
-        p_new = prices[t+1]
+        mask = (prices >= pmin) & (prices <= pmax)
 
-        for i, (L, pmin, pmax) in enumerate(Ls):
+        valid = np.where(mask)[0]
+        if len(valid) < 2:
+            continue
 
-            if not (p_old >= pmin and p_old <= pmax):
-                continue
-            if not (p_new >= pmin and p_new <= pmax):
-                continue
+        yvals = np.array([
+            y_amount_future(L, prices[k], pmin, pmax) for k in valid
+        ])
 
-            y_old = y_amount_future(L, p_old, pmin, pmax)
-            y_new = y_amount_future(L, p_new, pmin, pmax)
-
-            volumes[i] += abs(y_new - y_old)
+        dy = np.abs(np.diff(yvals))
+        volumes[i] += dy.sum()
 
     return prices, volumes
 
@@ -201,7 +201,7 @@ if do_single:
         st.write(f"**Range {i}: ${v:,.2f}**")
 
 # ======================================================
-# MONTE CARLO
+# MONTE CARLO (FAST)
 # ======================================================
 
 st.write("## 📊 Monte Carlo Volume Distribution (1000 runs)")
